@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="bn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Demo – Bengali Image Captioning</title>
+
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #1a0b2e, #1c1440);
+        color: #ffffff;
+      }
+
+      .demo-container {
+        max-width: 900px;
+        margin: 80px auto;
+        background: #0f0f1a;
+        padding: 40px;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      }
+
+      h1 {
+        text-align: center;
+        color: #e879f9;
+      }
+
+      .subtitle {
+        text-align: center;
+        color: #d1d5db;
+        margin-bottom: 40px;
+      }
+
+      .upload-box {
+        text-align: center;
+        border: 2px dashed #9333ea;
+        padding: 30px;
+        border-radius: 12px;
+      }
+
+      input[type="file"] {
+        margin: 20px 0;
+        color: #ffffff;
+      }
+
+      button {
+        background: #a21caf;
+        color: #ffffff;
+        border: none;
+        padding: 14px 30px;
+        font-size: 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+
+      button:hover {
+        background: #86198f;
+      }
+
+      .caption-box {
+        margin-top: 40px;
+        background: #111827;
+        padding: 20px;
+        border-radius: 12px;
+      }
+
+      .caption-box h3 {
+        color: #f0abfc;
+      }
+
+      .caption-text {
+        font-size: 1.2rem;
+        color: #e5e7eb;
+      }
+
+      .listen-btn {
+        margin-top: 15px;
+        background: #22c55e;
+      }
+
+      .listen-btn:hover {
+        background: #16a34a;
+      }
+
+      .note {
+        margin-top: 35px;
+        text-align: center;
+        font-size: 0.9rem;
+        color: #9ca3af;
+      }
+      /* Footer spacing */
+      footer {
+        background: #6a1b9a;
+        color: #fff;
+        padding: 15px 10px;
+        text-align: center;
+        margin-top: 40px;
+      }
+      footer p {
+        margin: 5px 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    {% include "navbar.html" %}
+
+    <main class="demo-container" aria-labelledby="demoTitle">
+      <h1 id="demoTitle">Bengali Image Captioning – Demo</h1>
+      <p class="subtitle">
+        Upload an image and experience how AI describes visuals in Bangla for
+        visually impaired users.
+      </p>
+
+      <form method="POST" enctype="multipart/form-data">
+        <div class="upload-box">
+          <label for="imageUpload">Choose an image</label><br />
+          <input id="imageUpload" type="file" name="image" required />
+          <br /><br />
+          <button type="submit">Generate Caption</button>
+        </div>
+      </form>
+
+      {% if caption %}
+      <section class="caption-box" aria-live="polite">
+        <h3>Generated Bangla Caption</h3>
+        <p id="captionText" class="caption-text">{{ caption }}</p>
+        <button class="listen-btn" onclick="speakCaption()">
+          🔊 Listen Caption
+        </button>
+      </section>
+      {% endif %}
+
+      <p class="note">
+        ⚠ This demo can be used only once.
+        <br />
+        Sign up to unlock unlimited AI caption generation.
+      </p>
+    </main>
+
+    <script>
+      function speakCaption() {
+        const text = document.getElementById("captionText").innerText;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = "bn-BD";
+        window.speechSynthesis.speak(utterance);
+      }
+    </script>
+
+    <footer>
+      <p>&copy; 2025 Bangla Image Captioning. All Rights Reserved.</p>
+    </footer>
+  </body>
+</html>

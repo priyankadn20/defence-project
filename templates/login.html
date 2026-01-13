@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Login</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f8f8f8;
+      }
+      .container {
+        max-width: 400px;
+        margin: 40px auto;
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px #ccc;
+      }
+      h2 {
+        text-align: center;
+      }
+      .field-container {
+        position: relative;
+        margin-bottom: 16px;
+      }
+      input[type="text"],
+      input[type="email"],
+      input[type="password"],
+      input[type="date"] {
+        width: 100%;
+        padding: 10px;
+        box-sizing: border-box;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+      }
+      label {
+        position: absolute;
+        left: 10px;
+        top: -8px;
+        background: white;
+        padding: 0 4px;
+        font-size: 12px;
+        color: #d8000c;
+        font-weight: bold;
+      }
+      label.hidden {
+        display: none;
+      }
+      button {
+        width: 100%;
+        background: #006cff;
+        color: white;
+        padding: 10px;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+      }
+      .link {
+        text-align: center;
+        margin-top: 14px;
+      }
+      .flash {
+        color: #d8000c;
+        background: #ffd2d2;
+        padding: 8px;
+        border-radius: 4px;
+        margin-bottom: 12px;
+        text-align: center;
+      }
+      .success {
+        color: green;
+        background: #e0ffe0;
+      }
+    </style>
+  </head>
+  <body>
+    {% include "navbar.html" %}
+    <div class="container">
+      <h2>Login</h2>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {% if category == 'success' %}success{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+      {% endwith %}
+      
+      <form method="POST" id="loginForm">
+        <div class="field-container">
+          <input type="email" name="email" placeholder="Email" required />
+          <label class="required-star">*</label>
+        </div>
+        <div class="field-container">
+          <input type="password" name="password" placeholder="Password" required />
+          <label class="required-star">*</label>
+        </div>
+        <button type="submit">Login</button>
+      </form>
+      
+      <div class="link">
+        <a href="{{ url_for('register') }}">Don't have an account? Register</a>
+      </div>
+    </div>
+
+    <script>
+      const form = document.getElementById('loginForm');
+      const fields = form.querySelectorAll('input[required]');
+      const stars = form.querySelectorAll('.required-star');
+
+      function checkField(field, star) {
+        if (!field.value || (field.type === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(field.value))) {
+          star.classList.remove('hidden'); // show *
+        } else {
+          star.classList.add('hidden'); // hide *
+        }
+      }
+
+      // initial check
+      fields.forEach((f, i) => checkField(f, stars[i]));
+
+      // listen to input
+      fields.forEach((field, i) => {
+        field.addEventListener('input', () => checkField(field, stars[i]));
+        field.addEventListener('blur', () => checkField(field, stars[i]));
+      });
+
+      // prevent submit if invalid
+      form.addEventListener('submit', function(e) {
+        let valid = true;
+        fields.forEach((f, i) => {
+          checkField(f, stars[i]);
+          if (!f.value || (f.type === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.value))) {
+            valid = false;
+          }
+        });
+        if (!valid) {
+          e.preventDefault();
+          alert("Please fill all required fields correctly.");
+        }
+      });
+    </script>
+  </body>
+</html>

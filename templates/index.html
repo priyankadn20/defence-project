@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="{{ 'bn' if prefs and prefs.language=='bn' else 'en' }}">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Bangla Image Captioning</title>
+    <style>
+      :root{ --accent: {{ prefs.accent if prefs else 'purple' }}; }
+      [data-accent="red"]{ --accent:#d32f2f; }
+      [data-accent="green"]{ --accent:#2e7d32; }
+      [data-accent="green pastel"]{ --accent:#63b95d; }
+      [data-accent="yellow"]{ --accent:#f9a825; }
+      [data-accent="purple"]{ --accent:#6a1b9a; }
+
+      body{
+        font-family:sans-serif;
+        background:#f4f4f9;
+        margin:0;
+        transition:background .2s,color .2s;
+      }
+      body.dark{
+        background:#0f1216;
+        color:#e9edf1;
+      }
+
+      .container{
+        background:#fff;
+        padding:25px 20px;
+        border-radius:10px;
+        width:400px;
+        margin:60px auto;
+        box-shadow:0 2px 8px rgba(0,0,0,.09);
+        text-align:center;
+      }
+      body.dark .container{
+        background:#121722;
+        box-shadow:0 2px 16px rgba(0,0,0,.35);
+      }
+
+      h2{
+        color:#18222c;
+        margin-bottom:20px;
+      }
+      body.dark h2{
+        color:#e9edf1;
+      }
+
+      input[type="file"]{ margin:10px 0; width:100%; }
+      button{
+        background:var(--accent);
+        color:#fff; padding:10px;
+        border:none; width:100%;
+        border-radius:8px;
+        font-size:16px;
+        cursor:pointer;
+      }
+
+      img{
+        max-width:100%;
+        margin:15px 0;
+        border-radius:8px;
+      }
+      .caption{
+        background:#f0f0f0;
+        padding:12px;
+        border-radius:8px;
+        margin-top:15px;
+        color:#333;
+      }
+      .copy-btn {
+        background: #7b1fa2;
+        color: white;
+        border: none;
+        width:15%;
+        padding: 6px 12px;
+        margin-left: 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .copy-btn:hover {
+        background: #6a1b9a;
+      }
+
+      body.dark .caption{
+        background:#1b2231;
+        color:#e9edf1;
+      }
+
+      .topbar{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:15px;
+      }
+      .user-chip{
+        display:flex;
+        align-items:center;
+        gap:4px;
+        cursor:pointer;
+        color:#1f2a44;
+      }
+      body.dark .user-chip{
+        background:#1b2231;
+        color:#e9edf1;
+        border-color:#2a354a;
+      }
+      .logout{
+        color:#fff;
+        background:#d32f2f;
+        padding:7px 15px;
+        border-radius:8px;
+        text-decoration:none;
+      }
+      .logout:hover{
+        background:#b71c1c;
+      }
+      .apps-name{
+        margin-top:20;
+        margin-bottom:20px;
+        color:#8a0ac6;
+        padding-bottom: 80px;
+      }
+
+      /* Drawer */
+      .drawer-backdrop{
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,.35);
+        display:none;
+      }
+      .drawer{
+        position:fixed;
+        top:0;
+        right:-380px;
+        width:360px;
+        height:100vh;
+        background:#fff;
+        box-shadow:-6px 0 18px rgba(0,0,0,.15);
+        padding:18px;
+        transition:right .25s;
+        overflow:auto;
+      }
+      body.dark .drawer{
+        background:#0f1522;
+      }
+      .drawer.open{
+        right:0;
+      }
+      .drawer-backdrop.show{
+        display:block;
+      }
+
+      .tabs{
+        display:flex;
+        flex-direction: column;
+        gap:8px;
+        margin-bottom:12px;
+      }
+      .tab-btn{
+        flex:1;
+        padding:10px;
+        border:1px solid #d7dae0;
+        border-radius:10px;
+        background:#520252;
+        cursor:pointer;
+      }
+      body.dark .tab-btn{
+        background:#141b2b;
+        border-color:#26324a;
+        color:#e9edf1;
+      }
+      .tab-btn.active{
+        border-color:var(--accent);
+        box-shadow:0 0 0 2px color-mix(in oklab, var(--accent) 35%, transparent);
+       }
+
+      .section{
+        display:none;
+        text-align:left;
+      }
+      .section.active{
+        display:block;
+      }
+
+      .sub-section{
+        display:none;
+        margin-top:10px;
+        padding-left:10px;
+        border-left:2px solid var(--accent);
+      }
+
+      .list{
+        display:grid;
+        gap:8px;
+        margin-top:10px;
+      }
+      .radio-row{
+        display:flex;
+        flex-direction: column;
+        gap:8px;
+        flex-wrap:wrap;
+      }
+      .radio-row label{
+        padding:8px 12px;
+        border:1px solid #d7dae0;
+        border-radius:999px;
+        cursor:pointer;
+      }
+      body.dark .radio-row label{
+        border-color:#2a354a;
+      }
+      input[type="radio"]{ display:none; }
+      input[type="radio"]:checked + label{ border-color:var(--accent); outline:2px solid color-mix(in oklab, var(--accent) 30%, transparent); }
+
+      .hist-item{
+        display:flex;
+        gap:10px;
+        align-items:center;
+        border:1px solid #e5e7eb;
+        padding:8px;
+        border-radius:10px;
+      }
+      body.dark .hist-item{
+        border-color:#ff031c; }
+      .muted{
+        opacity:.75;
+        font-size:.9rem; }
+      .small-btn{
+        padding:8px 10px;
+        width:auto;
+        text-decoration: none;
+        border-radius:8px;
+        background:var(--accent);
+        background-color: rgb(156, 156, 152);
+        color:#ffffff;
+        border:none;
+        cursor:pointer;
+      }
+      .toggle-btn{
+        cursor:pointer;
+        color:var(--accent);
+        font-weight:bold;
+        margin-top:6px;
+      }
+    </style>
+  </head>
+  <body
+    class="{{ 'dark' if prefs and prefs.theme=='dark' else '' }}"
+    data-accent="{{ prefs.accent if prefs else 'purple' }}"
+  >
+  {% include "navbar.html" %}
+    <div class="container">
+      <div class="topbar">
+        <div
+          class="user-chip"
+          id="openDrawer"
+          title="Open menu"
+          style="width: 50; height: 35px"
+        >
+          {% if profile_image %}
+          <img
+            src="{{ url_for('static', filename=profile_image) }}"
+            alt="avatar"
+            style="
+              width: 28px;
+              height: 28px;
+              border-radius: 50%;
+              object-fit: cover;
+              border: 1px solid var(--accent);
+            "
+          />
+          {% else %}
+          <div
+            style="
+              width: 28px;
+              height: 28px;
+              border-radius: 50%;
+              background: #ddd;
+              display: grid;
+              place-items: center;
+            "
+          >
+            👤
+          </div>
+          {% endif %}
+        </div>
+        <a class="logout" href="{{url_for('logout')}}">Logout</a>
+      </div>
+
+      <h2 class="apps-name">রঙছন্দ</h2>
+
+      <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="image" accept="image/*" required /><br />
+        <button type="submit">
+          {{ 'Caption' if prefs and prefs.language=='en' else 'ক্যাপশন' }}
+        </button>
+      </form>
+
+      {% if filename %}
+      <h3 style="margin-top: 16px">
+        {{ 'Uploaded Image:' if prefs and prefs.language=='en' else 'আপলোড করা
+        ছবি:' }}
+      </h3>
+      <img
+        src="{{ url_for('static', filename='uploads/' + filename) }}"
+        alt="Uploaded Image"
+      />
+      {% endif %} {% if caption %}
+      <div class="caption">
+        <b
+          >{{ 'Predicted caption:' if prefs and prefs.language=='en' else
+          'প্রেডিক্টেড ক্যাপশন:' }}</b
+        >
+        <span id="captionText">{{ caption }}</span>
+        <button class="copy-btn" onclick="copyCaption()">Copy</button>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Drawer -->
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
+    <aside class="drawer" id="drawer">
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+        "
+      >
+        <div style="display: flex; gap: 10px; align-items: center">
+          {% if profile_image %}
+          <img
+            src="{{ url_for('static', filename=profile_image) }}"
+            alt="avatar"
+            style="
+              width: 42px;
+              height: 42px;
+              border-radius: 999px;
+              object-fit: cover;
+              border: 2px solid var(--accent);
+            "
+          />
+          {% else %}
+          <div
+            style="
+              width: 42px;
+              height: 42px;
+              border-radius: 999px;
+              background: #e5e7eb;
+              display: grid;
+              place-items: center;
+            "
+          >
+            👤
+          </div>
+          {% endif %}
+          <div>
+            <div style="font-weight: 700">{{ username }}</div>
+            <div class="muted">
+              {{ 'Menu' if prefs and prefs.language=='en' else 'menu' }}
+            </div>
+          </div>
+        </div>
+        <button class="small-btn" onclick="closeDrawer()">✖</button>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn" data-tab="general">General</button>
+        <button class="tab-btn" data-tab="profile">Profile</button>
+        <button class="tab-btn" data-tab="settings">Settings</button>
+      </div>
+
+      <!-- General -->
+      <section id="general" class="section">
+        <div class="toggle-btn" onclick="toggleSub('theme-sub')">Theme</div>
+        <div id="theme-sub" class="sub-section">
+          <form
+            action="{{ url_for('update_prefs') }}"
+            method="POST"
+            class="list"
+          >
+            <div class="radio-row">
+              <input id="t-system" type="radio" name="theme" value="system" {%
+              if prefs and prefs.theme=='system' %}checked{% endif %}>
+              <label for="t-system">System</label> <input id="t-light"
+              type="radio" name="theme" value="light" {% if prefs and
+              prefs.theme=='light' %}checked{% endif %}>
+              <label for="t-light">Light</label> <input id="t-dark" type="radio"
+              name="theme" value="dark" {% if prefs and prefs.theme=='dark'
+              %}checked{% endif %}> <label for="t-dark">Dark</label>
+            </div>
+            <button type="submit" class="small-btn">Save</button>
+          </form>
+        </div>
+
+        <div class="toggle-btn" onclick="toggleSub('accent-sub')">
+          Accent Color
+        </div>
+        <div id="accent-sub" class="sub-section">
+          <form
+            action="{{ url_for('update_prefs') }}"
+            method="POST"
+            class="list"
+          >
+            <div class="radio-row">
+              {% for c in ['red','green','black','yellow','purple'] %} <input
+              id="a-{{c}}" type="radio" name="accent" value="{{c}}" {% if prefs
+              and prefs.accent==c %}checked{% endif %}>
+              <label for="a-{{c}}">{{c|capitalize}}</label> {% endfor %}
+            </div>
+            <button type="submit" class="small-btn">Save</button>
+          </form>
+        </div>
+
+        <div class="toggle-btn" onclick="toggleSub('language-sub')">
+          Language
+        </div>
+        <div id="language-sub" class="sub-section">
+          <form
+            action="{{ url_for('update_prefs') }}"
+            method="POST"
+            class="list"
+          >
+            <div class="radio-row">
+              <input id="l-en" type="radio" name="language" value="en" {% if
+              prefs and prefs.language=='en' %}checked{% endif %}>
+              <label for="l-en">English</label> <input id="l-bn" type="radio"
+              name="language" value="bn" {% if prefs and prefs.language=='bn'
+              %}checked{% endif %}> <label for="l-bn">Bangla</label>
+            </div>
+            <button type="submit" class="small-btn">Save</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Profile -->
+      <section id="profile" class="section">
+        <div class="toggle-btn" onclick="toggleSub('profile-img-sub')">
+          Profile Image
+        </div>
+        <div id="profile-img-sub" class="sub-section">
+          <form
+            action="{{ url_for('upload_profile') }}"
+            method="POST"
+            enctype="multipart/form-data"
+          >
+            <input type="file" name="profile_image" accept="image/*" />
+            <button type="submit" class="small-btn">Upload</button>
+          </form>
+          <form
+            action="{{ url_for('remove_profile') }}"
+            method="POST"
+            style="margin-top: 6px"
+          >
+            <button type="submit" class="small-btn" style="background: #ff0606">
+              Remove
+            </button>
+          </form>
+        </div>
+
+        <div class="toggle-btn" onclick="toggleSub('change-pass-sub')">
+          Change Password
+        </div>
+        <div id="change-pass-sub" class="sub-section">
+          <form
+            action="{{ url_for('change_password') }}"
+            method="POST"
+            class="list"
+          >
+            <input
+              type="password"
+              name="current_password"
+              placeholder="Current password"
+              required
+            />
+            <input
+              type="password"
+              name="new_password"
+              placeholder="New password"
+              required
+            />
+            <input
+              type="password"
+              name="confirm_password"
+              placeholder="Confirm new password"
+              required
+            />
+            <button type="submit" class="small-btn">Update Password</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Settings -->
+      <section id="settings" class="section">
+        <div class="toggle-btn" onclick="toggleSub('history-sub')">History</div>
+        <div id="history-sub" class="sub-section">
+          {% if history %} {% for h in history %}
+          <div class="hist-item">
+            <img
+              src="{{ url_for('static', filename='uploads/' + h.filename) }}"
+              style="
+                width: 52px;
+                height: 52px;
+                border-radius: 8px;
+                object-fit: cover;
+              "
+            />
+            <div>
+              <div style="font-weight: 600; font-size: 0.95rem">
+                {{ h.caption[:60] }}{% if h.caption|length>60 %}…{% endif %}
+              </div>
+              <div class="muted">{{ h.created_at }}</div>
+            </div>
+          </div>
+          {% endfor %} {% else %}
+          <div class="muted">No history yet.</div>
+          {% endif %}
+          <form
+            action="{{ url_for('clear_history') }}"
+            method="POST"
+            style="margin-top: 6px"
+          >
+            <button type="submit" class="small-btn">Clear</button>
+          </form>
+        </div>
+
+        <div class="toggle-btn" onclick="toggleSub('account-sub')">Account</div>
+        <div id="account-sub" class="sub-section">
+          <form
+            action="{{ url_for('account_delete') }}"
+            method="POST"
+            onsubmit="return confirm('Delete account permanently?');"
+          >
+            <button type="submit" class="small-btn" style="background: #ef4444">
+              Delete
+            </button>
+          </form>
+          <a
+            class="small-btn"
+            href="{{ url_for('logout') }}"
+            style="display: inline-block; background: #0ea5e9; margin-top: 6px"
+            >Logout</a
+          >
+        </div>
+      </section>
+    </aside>
+
+    <script>
+      function copyCaption() {
+        // caption text
+        const caption = document.getElementById("captionText").innerText;
+
+        // copy to clipboard
+        navigator.clipboard
+          .writeText(caption)
+          .then(() => {
+            alert("Caption copied to clipboard ✅");
+          })
+          .catch((err) => {
+            console.error("Copy failed:", err);
+          });
+      }
+      const drawer = document.getElementById("drawer");
+      const backdrop = document.getElementById("drawerBackdrop");
+      document.getElementById("openDrawer").addEventListener("click", () => {
+        drawer.classList.add("open");
+        backdrop.classList.add("show");
+      });
+      function closeDrawer() {
+        drawer.classList.remove("open");
+        backdrop.classList.remove("show");
+      }
+
+      // Section tab toggle
+      const tabs = document.querySelectorAll(".tab-btn");
+      const sections = document.querySelectorAll(".section");
+      tabs.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          // toggle section show/hide
+          const target = document.getElementById(btn.dataset.tab);
+          if (target.classList.contains("active")) {
+            target.classList.remove("active");
+            btn.classList.remove("active");
+          } else {
+            sections.forEach((s) => s.classList.remove("active"));
+            tabs.forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+            target.classList.add("active");
+          }
+        });
+      });
+
+      // Sub-section toggle
+      function toggleSub(id) {
+        const el = document.getElementById(id);
+        el.style.display = el.style.display === "block" ? "none" : "block";
+      }
+
+      // Theme handling
+      const themePref = "{{ prefs.theme if prefs else 'light' }}";
+      if (themePref === "system") {
+        const mq = window.matchMedia("(prefers-color-scheme: dark)");
+        document.body.classList.toggle("dark", mq.matches);
+        mq.addEventListener("change", (e) =>
+          document.body.classList.toggle("dark", e.matches)
+        );
+      } else if (themePref === "dark") {
+        document.body.classList.add("dark");
+      } else {
+        document.body.classList.remove("dark");
+      }
+    </script>
+  </body>
+</html>

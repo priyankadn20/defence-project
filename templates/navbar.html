@@ -1,0 +1,79 @@
+<style>
+  /* Navbar */
+  .navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    background:#6a1b9a;
+    color: #ffffff;
+  }
+  .navbar img {
+    height: 42px;
+    width: 42px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid #fff;
+  }
+  .nav-links {
+    display: flex;
+    gap: 45px;
+  }
+  .nav-links a {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover {
+    color: #8e0015;
+  }
+  .menu-toggle {
+    display: none;
+    font-size: 24px;
+    cursor: pointer;
+  }
+  @media (max-width: 768px) {
+    .nav-links {
+      display: none;
+      flex-direction: column;
+      background: #161718;
+      position: absolute;
+      top: 60px;
+      right: 0;
+      width: 200px;
+      padding: 10px;
+    }
+    .nav-links.active {
+      display: flex;
+    }
+    .menu-toggle {
+      display: block;
+    }
+  }
+</style>
+
+<nav class="navbar">
+  <div class="logo">
+    <img src="{{ url_for('static', filename='logo.webp') }}" alt="Logo" />
+  </div>
+
+  <div class="menu-toggle" id="menuToggle">☰</div>
+
+  <div class="nav-links" id="navLinks">
+    <a href="{{ url_for('home_page') }}">Home</a>
+    <a href="{{ url_for('about') }}">About</a>
+    <a href="{{ url_for('demo') }}">Demo</a>
+    <a href="{{ url_for('contact') }}">Contact</a>
+    <a href="{{ url_for('register') }}">Registration</a>
+    <a href="{{ url_for('login') }}">Login</a>
+  </div>
+</nav>
+
+<script>
+  const toggle = document.getElementById("menuToggle");
+  const navLinks = document.getElementById("navLinks");
+  toggle?.addEventListener("click", () => {
+    navLinks.classList.toggle("active");
+  });
+</script>

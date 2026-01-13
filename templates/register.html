@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Registration</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f8f8f8;
+      }
+      .container {
+        max-width: 400px;
+        margin: 40px auto;
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px #ccc;
+      }
+      h2 {
+        text-align: center;
+      }
+      .field-container {
+        position: relative;
+        margin-bottom: 16px;
+      }
+      input[type="text"],
+      input[type="email"],
+      input[type="password"],
+      input[type="date"] {
+        width: 100%;
+        padding: 10px;
+        box-sizing: border-box;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+      }
+      label {
+        position: absolute;
+        left: 10px;
+        top: -8px;
+        background: white;
+        padding: 0 4px;
+        font-size: 12px;
+        color: #d8000c;
+        font-weight: bold;
+      }
+      label.hidden {
+        display: none;
+      }
+      button {
+        width: 100%;
+        background: #006cff;
+        color: white;
+        padding: 10px;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+      }
+      .link {
+        text-align: center;
+        margin-top: 14px;
+      }
+      .flash {
+        color: #d8000c;
+        background: #ffd2d2;
+        padding: 8px;
+        border-radius: 4px;
+        margin-bottom: 12px;
+        text-align: center;
+      }
+      .success {
+        color: green;
+        background: #e0ffe0;
+      }
+    </style>
+  </head>
+  <body>
+    {% include "navbar.html" %}
+    <div class="container">
+      <h2>Registration</h2>
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
+      <div class="flash {% if category == 'success' %}success{% endif %}">
+        {{ message }}
+      </div>
+      {% endfor %} {% endif %} {% endwith %}
+      <form method="POST" id="regForm">
+        <div class="field-container">
+          <label id="lbl-fullname">*</label>
+          <input type="text" name="fullname" placeholder="Full Name" required />
+        </div>
+        <div class="field-container">
+          <label id="lbl-email">*</label>
+          <input type="email" name="email" placeholder="Email" required />
+        </div>
+        <div class="field-container">
+          <label id="lbl-password">*</label>
+          <input
+            type="password"
+            name="password"
+            placeholder="Enter 6 digit password at least"
+            required
+          />
+        </div>
+        <div class="field-container">
+          <label id="lbl-mobile">*</label>
+          <input
+            type="text"
+            name="mobile"
+            placeholder="Mobile (11 digits)"
+            maxlength="11"
+            required
+          />
+        </div>
+        <div class="field-container">
+          <label id="lbl-dob">*</label>
+          <input type="date" name="dob" required />
+        </div>
+        <button type="submit">Register</button>
+      </form>
+      {% if "user_id" not in session %}
+      <div class="link">
+        <a href="{{ url_for('login') }}">Already registered? Login</a>
+      </div>
+      {% endif %}
+    </div>
+
+    <script>
+      function isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      }
+
+      function validateField(name, value) {
+        switch (name) {
+          case "fullname":
+            return value.trim().length > 0;
+          case "email":
+            return isValidEmail(value);
+          case "password":
+            return value.length >= 6;
+          case "mobile":
+            return /^\d{11}$/.test(value);
+          case "dob":
+            return value.trim().length > 0;
+          default:
+            return false;
+        }
+      }
+
+      const fields = [
+        { input: "fullname", label: "lbl-fullname" },
+        { input: "email", label: "lbl-email" },
+        { input: "password", label: "lbl-password" },
+        { input: "mobile", label: "lbl-mobile" },
+        { input: "dob", label: "lbl-dob" },
+      ];
+
+      fields.forEach((f) => {
+        const inputEl = document.querySelector(`input[name="${f.input}"]`);
+        const labelEl = document.getElementById(f.label);
+
+        inputEl.addEventListener("input", () => {
+          if (validateField(f.input, inputEl.value)) {
+            labelEl.classList.add("hidden"); // Hide * if valid
+          } else {
+            labelEl.classList.remove("hidden"); // Show * if invalid
+          }
+        });
+      });
+
+      // Optional: validate on form submit too
+      document.getElementById("regForm").addEventListener("submit", (e) => {
+        let valid = true;
+        fields.forEach((f) => {
+          const inputEl = document.querySelector(`input[name="${f.input}"]`);
+          const labelEl = document.getElementById(f.label);
+          if (!validateField(f.input, inputEl.value)) {
+            labelEl.classList.remove("hidden");
+            valid = false;
+          }
+        });
+        if (!valid) {
+          e.preventDefault(); // stop form submission
+          alert("Please fix the fields marked with *");
+        }
+      });
+    </script>
+  </body>
+</html>
