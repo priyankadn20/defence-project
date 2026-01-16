@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/home.css') }}"
+    />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bangla Image Captioning - Home</title>
@@ -192,7 +196,7 @@
     </style>
   </head>
   <body>
-{% include "navbar.html" %}
+    {% include "navbar.html" %}
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-content">

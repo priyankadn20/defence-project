@@ -29,17 +29,17 @@ def get_db_connection():
     return mysql.connector.connect(**DB_CONFIG)
 
 def db_init():
-    """Create only what we need (history). Users table already exists in your DB."""
+    """Create only what we need (histry). User table already exists in your DB."""
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS history (
+        CREATE TABLE IF NOT EXISTS histry (
             id INT PRIMARY KEY AUTO_INCREMENT,
             user_id INT NOT NULL,
             filename VARCHAR(255) NOT NULL,
             caption TEXT,
             created_at DATETIME NOT NULL,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
         )
     """)
     conn.commit()
@@ -119,7 +119,7 @@ def extract_features(image_path):
 def get_user(email):
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM users WHERE email=%s", (email,))
+    cur.execute("SELECT * FROM user WHERE email=%s", (email,))
     user = cur.fetchone()
     conn.close()
     return user
@@ -127,7 +127,7 @@ def get_user(email):
 def get_user_by_id(uid):
     conn = get_db_connection()
     cur = conn.cursor(dictionary=True)
-    cur.execute("SELECT * FROM users WHERE id=%s", (uid,))
+    cur.execute("SELECT * FROM user WHERE id=%s", (uid,))
     user = cur.fetchone()
     conn.close()
     return user
@@ -199,7 +199,7 @@ def contact():
             conn = get_db_connection()
             cur = conn.cursor()
             cur.execute("""
-                INSERT INTO contact_messages (name, email, subject, message)
+                INSERT INTO contact (name, email, subject, message)
                 VALUES (%s, %s, %s, %s)
             """, (name, email, subject, message))
             conn.commit()
@@ -247,7 +247,7 @@ def register():
             hashed = generate_password_hash(password)
             # new columns will take defaults (theme/accent_color/language) and profile_image = NULL
             cur.execute("""
-                INSERT INTO users (fullname, email, password, mobile, dob)
+                INSERT INTO user (fullname, email, password, mobile, dob)
                 VALUES (%s,%s,%s,%s,%s)
             """, (fullname, email, hashed, mobile, dob))
             conn.commit()
@@ -317,7 +317,7 @@ def main_app():
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO history (user_id, filename, caption, created_at) VALUES (%s,%s,%s,%s)",
+            "INSERT INTO histry (user_id, filename, caption, created_at) VALUES (%s,%s,%s,%s)",
             (uid, filename, caption, datetime.now())
         )
         conn.commit()
@@ -326,8 +326,8 @@ def main_app():
     # last 10 items
     conn = get_db_connection()
     cur = conn.cursor(dictionary=True)
-    cur.execute("SELECT * FROM history WHERE user_id=%s ORDER BY created_at DESC LIMIT 10", (uid,))
-    history = cur.fetchall()
+    cur.execute("SELECT * FROM histry WHERE user_id=%s ORDER BY created_at DESC LIMIT 10", (uid,))
+    histry = cur.fetchall()
     conn.close()
 
     return render_template("index.html",
@@ -336,9 +336,9 @@ def main_app():
                            caption=caption,
                            prefs=prefs,
                            profile_image=profile_image,
-                           history=history)
+                           histry=histry)
 
-# ------------- General prefs (users table) -------------
+# ------------- General prefs (user table) -------------
 @app.route("/prefs/update", methods=["POST"])
 def update_prefs():
     if "user_id" not in session:
@@ -351,7 +351,7 @@ def update_prefs():
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("""
-        UPDATE users
+        UPDATE user
         SET theme = COALESCE(%s, theme),
             accent_color = COALESCE(%s, accent_color),
             language = COALESCE(%s, language)
@@ -380,7 +380,7 @@ def upload_profile():
 
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("UPDATE users SET profile_image=%s WHERE id=%s", (rel_path, uid))
+    cur.execute("UPDATE user SET profile_image=%s WHERE id=%s", (rel_path, uid))
     conn.commit()
     conn.close()
     flash("Profile photo updated!", "success")
@@ -402,7 +402,7 @@ def remove_profile():
 
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("UPDATE users SET profile_image=NULL WHERE id=%s", (uid,))
+    cur.execute("UPDATE user SET profile_image=NULL WHERE id=%s", (uid,))
     conn.commit()
     conn.close()
     flash("Profile photo removed.", "success")
@@ -430,25 +430,25 @@ def change_password():
 
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("UPDATE users SET password=%s WHERE id=%s",
+    cur.execute("UPDATE user SET password=%s WHERE id=%s",
                 (generate_password_hash(newp), uid))
     conn.commit()
     conn.close()
     flash("Password changed successfully!", "success")
     return redirect(url_for("main_app"))
 
-# ------------- History + account + logout -------------
-@app.route("/history/clear", methods=["POST"])
+# ------------- Histry + account + logout -------------
+@app.route("/histry/clear", methods=["POST"])
 def clear_history():
     if "user_id" not in session:
         return redirect(url_for("login"))
     uid = session["user_id"]
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("DELETE FROM history WHERE user_id=%s", (uid,))
+    cur.execute("DELETE FROM histry WHERE user_id=%s", (uid,))
     conn.commit()
     conn.close()
-    flash("History cleared.", "success")
+    flash("Histry cleared.", "success")
     return redirect(url_for("main_app"))
 
 @app.route("/account/delete", methods=["POST"])
@@ -458,7 +458,7 @@ def account_delete():
     uid = session["user_id"]
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("DELETE FROM users WHERE id=%s", (uid,))
+    cur.execute("DELETE FROM user WHERE id=%s", (uid,))
     conn.commit()
     conn.close()
     session.clear()
